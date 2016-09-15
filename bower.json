@@ -1,0 +1,23 @@
+{
+  "name": "ya-stdlib-js",
+  "description": "Yet Another \"Standard\" Library for Javascript",
+  "main": "stdlib.js",
+  "authors": [
+    "Mark Dittmer"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "javascript",
+    "ecmascript",
+    "library"
+  ],
+  "homepage": "https://github.com/mdittmer/ya-stdlib-js",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
