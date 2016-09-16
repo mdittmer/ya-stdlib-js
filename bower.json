@@ -1,7 +1,7 @@
 {
   "name": "ya-stdlib-js",
   "description": "Yet Another \"Standard\" Library for Javascript",
-  "main": "stdlib.js",
+  "main": "ya-stdlib-js.js",
   "authors": [
     "Mark Dittmer"
   ],
@@ -19,5 +19,8 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "es6-promise": "~3.3.1"
+  }
 }

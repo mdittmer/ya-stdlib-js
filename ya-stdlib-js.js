@@ -17,7 +17,46 @@
 'use strict';
 
 (function(define) {
-  define(function() {
+  define([ 'es6-promise' ], function(es6Promise) {
+    var Promise = typeof Promise === 'undefined' ?
+          es6Promise.Promise : Promise;
+
+    var loadURL = typeof XMLHttpRequest === 'undefined' ?
+          // Node JS:
+          (function() {
+            var urlParse = require('url').parse;
+            var httpRequest = require('http').request;
+            return function(url, opts) {
+              var str = '';
+              return new Promise(function(resolve, reject) {
+                httpRequest(urlParse(url), function(response) {
+                  var str = '';
+                  response.on('data', function (chunk) { str += chunk; });
+                  response.on('end', function () {
+                    if (opts.responseType === 'json')
+                      resolve(JSON.parse(str));
+                    else
+                      resolve(str);
+                  });
+                  response.on('error', function (e) { reject(e); });
+                }).end();
+              });
+            };
+          })() :
+        // Browser:
+        function(url, opts) {
+          var xhr = new XMLHttpRequest();
+          if (opts.responseType)
+            xhr.responseType = opts.responseType;
+
+          return new Promise(function(resolve, reject) {
+            xhr.addEventListener('load', resolve);
+            xhr.addEventListener('error', reject);
+            xhr.open('GET', url);
+            xhr.send();
+          });
+        };
+
     var stdlib = {
       argsToArray: (function() {
         if (typeof Array.from === 'function')
@@ -67,63 +106,13 @@
                 }
             );
       },
-      future: function future() {
-        var value;
-        var isSet;
-
-        isSet = false;
-        function f(f2) {
-          if (isSet) f2(value);
-          else f.waiters.push(f2);
-          return f;
-        }
-        f.waiters = [];
-        f.get = f;
-        f.set = function set(v) {
-          var i;
-          value = v;
-          isSet = true;
-          for (i = 0; i < f.waiters.length; i++) {
-            f.waiters[i](v);
-          }
-          isSet = false;
-          f.waiters = [];
-        };
-        return f;
-      },
       // Fetch URLs. Return a future that resolves after all URLs are fetched.
       loadData: function getData(urls_, opts) {
         var urls = Array.isArray(urls_) ? urls_ : [urls_];
-        var future;
-        var len;
-        var data;
-        var count;
-        var i;
-        var url;
-        var xhr;
 
-        opts = opts || {};
-
-        future = stdlib.future();
-        len = urls.length;
-        data = new Array(len);
-        count = 0;
-        function store(i) {
-          data[i] = this.response;
-          count++;
-          if (count === len)
-            future.set(Array.isArray(urls_) ? data : data[0]);
-        }
-        for (i = 0; i < len; i++) {
-          url = urls[i];
-          xhr = new XMLHttpRequest();
-          if (opts.responseType)
-            xhr.responseType = opts.responseType;
-          xhr.addEventListener('load', store.bind(xhr, i));
-          xhr.open('GET', url);
-          xhr.send();
-        }
-        return future;
+        return Promise.all(urls.map(function(url) {
+          return loadURL(url, opts);
+        }));
       },
       memo: function memo(o, key, f) {
         var value;
