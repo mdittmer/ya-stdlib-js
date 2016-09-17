@@ -32,8 +32,6 @@ gulp.task('lint', () => {
     .pipe($.eslint.failAfterError());
 });
 
-gulp.task('default', () =>
-  runSequence(
-    'lint'
-  )
-);
+gulp.task('default', cb => {
+  runSequence('lint', cb);
+});
