@@ -20,7 +20,7 @@ var request = require('hyperquest');
 var wait = require('event-stream').wait;
 
 var decoder = typeof TextDecoder === 'undefined' ?
-      new require('text-encoding').TextDecoder('utf-8') :
+      new (require('text-encoding').TextDecoder)('utf-8') :
       new TextDecoder('utf-8');
 
 var stdlib = {
