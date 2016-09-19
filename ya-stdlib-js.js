@@ -128,15 +128,40 @@ var stdlib = {
                                        );
   },
   // Fetch URLs. Return a future that resolves after all URLs are fetched.
-  loadData: function getData(urls_, opts) {
+  loadData: function loadData(urls_, opts) {
+    var resolver = typeof XMLHttpRequest === 'undefined' ?
+          function resolver(url, resolve, reject) {
+            opts.uri = url;
+            request(opts).pipe(wait(function(err, data) {
+              if (err) reject(err);
+              resolve(opts.responseType === 'json' ?
+                      JSON.parse(decoder.decode(data)) :
+                      decoder.decode(data));
+            }));
+          } :
+        function resolver(url, resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          if (opts.responseType)
+            xhr.responseType = opts.responseType;
+          xhr.addEventListener('load', resolve);
+          xhr.addEventListener('error', reject);
+          xhr.open('GET', url);
+          xhr.send();
+        };
+
+    return Array.isArray(urls_) ? Promise.all(urls_.map(function(url) {
+      return new Promise(resolver.bind(this, url));
+    })) : new Promise(resolver.bind(this, urls_));
+  },
+  function(urls_, opts) {
     function resolver(url, resolve, reject) {
-      opts.uri = url;
-      request(opts).pipe(wait(function(err, data) {
-        if (err) reject(err);
-        resolve(opts.responseType === 'json' ?
-                JSON.parse(decoder.decode(data)) :
-                decoder.decode(data));
-      }));
+      var xhr = new XMLHttpRequest();
+      if (opts.responseType)
+        xhr.responseType = opts.responseType;
+      xhr.addEventListener('load', resolve);
+      xhr.addEventListener('error', reject);
+      xhr.open('GET', url);
+      xhr.send();
     }
 
     return Array.isArray(urls_) ? Promise.all(urls_.map(function(url) {
