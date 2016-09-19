@@ -129,21 +129,20 @@ var stdlib = {
   },
   // Fetch URLs. Return a future that resolves after all URLs are fetched.
   loadData: function getData(urls_, opts) {
-    var wasArray = Array.isArray(urls_);
-    var urls = wasArray ? urls_ : [urls_];
+    function resolver(url, resolve, reject) {
+      opts.uri = url;
+      request(opts).pipe(wait(function(err, data) {
+        if (err) reject(err);
+        var res = decoder.decode(data);
+        if (opts.responseType === 'json')
+          res = res.map(JSON.parse);
+        resolve(res);
+      }));
+    }
 
-    return Promise.all(urls.map(function(url) {
-      return new Promise(function(resolve, reject) {
-        opts.uri = url;
-        request(opts).pipe(wait(function(err, data) {
-          if (err) reject(err);
-          if (opts.responseType === 'json')
-            data = data.map(JSON.parse);
-          if (wasArray) resolve(decoder.decode(data));
-          else resolve(decoder.decode(data[0]));
-        }));
-      });
-    }));
+    return Array.isArray(urls_) ? Promise.all(urls_.map(function(url) {
+      return new Promise(resolver.bind(this, url));
+    })) : new Promise(resolver.bind(this, urls_));
   },
   memo: function memo(o, key, f) {
     var value;
