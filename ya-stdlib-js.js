@@ -22,8 +22,17 @@ var wait = require('event-stream').wait;
 var decoder = typeof TextDecoder === 'undefined' ?
       new (require('text-encoding').TextDecoder)('utf-8') :
       new TextDecoder('utf-8');
+var stringify = require('json-stable-stringify');
 
 var stdlib = {
+  stringify: function(data) {
+    return stringify(data, {
+      space: '  ',
+      cmp: function(a, b) {
+        return a.key < b.key ? -1 : 1;
+      },
+    });
+  },
   remap: {
     '[]=>{}': function(arr) {
       var map = {};
@@ -120,14 +129,18 @@ var stdlib = {
   },
   // Fetch URLs. Return a future that resolves after all URLs are fetched.
   loadData: function getData(urls_, opts) {
-    var urls = Array.isArray(urls_) ? urls_ : [urls_];
+    var wasArray = Array.isArray(urls_);
+    var urls = wasArray ? urls_ : [urls_];
 
     return Promise.all(urls.map(function(url) {
       return new Promise(function(resolve, reject) {
         opts.uri = url;
         request(opts).pipe(wait(function(err, data) {
           if (err) reject(err);
-          else resolve(decoder.decode(data));
+          if (opts.responseType === 'json')
+            data = data.map(JSON.parse);
+          if (wasArray) resolve(decoder.decode(data));
+          else resolve(decoder.decode(data[0]));
         }));
       });
     }));
