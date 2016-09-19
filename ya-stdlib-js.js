@@ -133,10 +133,9 @@ var stdlib = {
       opts.uri = url;
       request(opts).pipe(wait(function(err, data) {
         if (err) reject(err);
-        var res = decoder.decode(data);
-        if (opts.responseType === 'json')
-          res = res.map(JSON.parse);
-        resolve(res);
+        resolve(opts.responseType === 'json' ?
+                JSON.parse(decoder.decode(data)) :
+                decoder.decode(data));
       }));
     }
 
