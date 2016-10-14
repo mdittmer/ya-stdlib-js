@@ -22,9 +22,6 @@
   },
   "homepage": "https://github.com/mdittmer/ya-stdlib-js#readme",
   "dependencies": {
-    "event-stream": "^3.3.4",
-    "hyperquest": "^2.1.0",
-    "json-stable-stringify": "^1.0.1",
-    "text-encoding": "^0.6.1"
+    "json-stable-stringify": "^1.0.1"
   }
 }
