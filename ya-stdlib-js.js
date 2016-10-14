@@ -16,12 +16,6 @@
  */
 'use strict';
 
-var request = require('hyperquest');
-var wait = require('event-stream').wait;
-
-var decoder = typeof TextDecoder === 'undefined' ?
-      new (require('text-encoding').TextDecoder)('utf-8') :
-      new TextDecoder('utf-8');
 var stringify = require('json-stable-stringify');
 
 var stdlib = {
@@ -128,28 +122,19 @@ var stdlib = {
                                        );
   },
   // Fetch URLs. Return a future that resolves after all URLs are fetched.
-  loadData: function loadData(urls_, opts) {
-    var resolver = typeof XMLHttpRequest === 'undefined' ?
-          function resolver(url, resolve, reject) {
-            opts.uri = url;
-            request(opts).pipe(wait(function(err, data) {
-              if (err) reject(err);
-              resolve(opts.responseType === 'json' ?
-                      JSON.parse(decoder.decode(data)) :
-                      decoder.decode(data));
-            }));
-          } :
-        function resolver(url, resolve, reject) {
-          var xhr = new XMLHttpRequest();
-          if (opts.responseType)
-            xhr.responseType = opts.responseType;
-          xhr.addEventListener('load', function() {
-            resolve(xhr.response);
-          });
-          xhr.addEventListener('error', reject);
-          xhr.open('GET', url);
-          xhr.send();
-        };
+  xhr: function xhr(urls_, opts) {
+    // TODO: Bring back NodeJS-friendly version of this API.
+    function resolver(url, resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      if (opts.responseType)
+      xhr.responseType = opts.responseType;
+      xhr.addEventListener('load', function() {
+        resolve(xhr.response);
+      });
+      xhr.addEventListener('error', reject);
+      xhr.open(opts.method || 'GET', url);
+      xhr.send(opts.data);
+    }
 
     return Array.isArray(urls_) ? Promise.all(urls_.map(function(url) {
       return new Promise(resolver.bind(this, url));
